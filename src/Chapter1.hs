@@ -220,7 +220,7 @@ not :: Bool -> Bool
 
 Boolean 'and' operator:
 >>> :t (&&)
-&&) :: Bool -> Bool -> Bool
+(&&) :: Bool -> Bool -> Bool
 
 Addition of two numbers:
 >>> :t (+)
@@ -300,7 +300,7 @@ expressions in GHCi
 >>> 10 - 15
 -5
 >>> 10 - (-5)  -- negative constants require ()
-+15
+15
 >>> (3 + 5) < 10
 True
 >>> True && False
