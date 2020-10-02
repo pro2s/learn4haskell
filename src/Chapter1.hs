@@ -475,7 +475,7 @@ Implement a function that returns the last digit of a given number.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 lastDigit :: Int -> Int
-lastDigit n = mod n 10
+lastDigit n = mod (abs n) 10
 
 
 {- |
@@ -540,8 +540,8 @@ Casual reminder about adding top-level type signatures for all functions :)
 
 mid :: Int -> Int -> Int -> Int
 mid x y z
-    | x > y && x < z = x
-    | y > x && y < z = y
+    | x <= max z y && x >= min z y = x
+    | y <= max x z && y >= min x z = y
     | otherwise = z
 
 {- |
@@ -562,7 +562,7 @@ isVowel c
     | c == 'o' = True
     | c == 'i' = True
     | c == 'u' = True
-    | c == 'y' = True
+    | c == 'e' = True
     | otherwise = False
 
 
@@ -627,10 +627,10 @@ Try to introduce variables in this task (either with let-in or where) to avoid
 specifying complex expressions.
 -}
 sumLast2 :: Int -> Int
-sumLast2 n = mod (last n) 10 + div (last n) 10
+sumLast2 n = mod (last2Digit (abs n)) 10 + div (last2Digit (abs n)) 10
   where
-    last :: Int -> Int
-    last l = mod l 100
+    last2Digit :: Int -> Int
+    last2Digit l = mod l 100
 
 
 {- |
@@ -652,8 +652,8 @@ aren't ready for this boss yet!
 -}
 firstDigit :: Int -> Int
 firstDigit n
-    | n > 9 = firstDigit (div n 10)
-    | otherwise = n
+    | (abs n) > 9 = firstDigit (div (abs n) 10)
+    | otherwise = abs n
 
 {-
 You did it! Now it is time to the open pull request with your changes
