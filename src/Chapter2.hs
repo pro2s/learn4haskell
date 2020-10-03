@@ -340,10 +340,17 @@ subList :: Int -> Int -> [a] -> [a]
 subList s e l
     | s < 0 = []
     | e < s = []
-    | otherwise = tr (e - s + 1) (tr (e + 1) l)
+    | otherwise = drop s (take (e + 1) l)
+{-
+subList :: Int -> Int -> [a] -> [a]
+subList s e l
+    | s < 0 = []
+    | e < s = []
+    | otherwise = tr (e - s) (tr e l)
       where
         tr :: Int -> [a] -> [a]
-        tr t nl = reverse (take t nl)
+        tr t nl = reverse (take (t + 1) nl)
+-}
 
 {- |
 =⚔️= Task 4
@@ -743,7 +750,7 @@ value of the element itself
 smartReplicate :: [Int] -> [Int]
 -- smartReplicate [] = []
 -- smartReplicate (x:xs) = replicate x x ++ smartReplicate xs
-smartReplicate l = concat (map (\x -> replicate x x) l)
+smartReplicate = concatMap (\x -> replicate x x)
 
 {- |
 =⚔️= Task 9
@@ -757,8 +764,7 @@ the list with only those lists that contain a passed element.
 🕯 HINT: Use the 'elem' function to check whether an element belongs to a list
 -}
 contains :: Int -> [[Int]] -> [[Int]]
-contains a l = filter (elem a) l
-
+contains a = filter (elem a)
 
 {- |
 =🛡= Eta-reduction
@@ -881,7 +887,14 @@ and reverses it.
 -}
 rewind :: [a] -> [a]
 rewind [] = []
-rewind (x:xs) = rewind xs ++ [x]
+rewind a = last a : rewind (init a)
+
+_rewind :: [a] -> [a]
+_rewind l = rev l []
+  where
+    rev [] a = a
+    rev (x:xs) a = rev xs (x:a)
+
 
 {-
 You did it! Now it is time to the open pull request with your changes
