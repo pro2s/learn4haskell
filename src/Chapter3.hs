@@ -344,6 +344,15 @@ of a book, but you are not limited only by the book properties we described.
 Create your own book type of your dreams!
 -}
 
+data Book = MkBook
+    { bookAuthor    :: String
+    , bookCover     :: String
+    , bookPages     :: Int
+    , bookIsRead    :: Bool
+    , bookIsbn      :: String
+    , nookGenres    :: [String]
+    } deriving (Show)
+
 {- |
 =⚔️= Task 2
 
@@ -373,6 +382,43 @@ after the fight. The battle has the following possible outcomes:
    doesn't earn any money and keeps what they had before.
 
 -}
+
+data Knight = MkKnight
+    { knightName      :: String
+    , knightVictories :: Int
+    , knightHealth    :: Int
+    , knightAttack    :: Int
+    , knightGold      :: Int
+    } deriving (Show)
+
+data Monster = MkMonster
+    { monsterName     :: String
+    , monsterVoice    :: String
+    , monsterHealth   :: Int
+    , monsterAttack   :: Int
+    , monsterGold     :: Int
+    } deriving (Show)
+
+fight :: Knight -> Monster -> Int
+fight k m
+    | knightHealth k <= 0 = (-1)
+    | monsterHealth m <= knightAttack k = knightGold k + monsterGold m
+    | monsterHealth m > knightAttack k = fight (hitKnight k m) (hitMonster m k)
+    | otherwise = 0
+      where
+        hitKnight :: Knight -> Monster -> Knight
+        hitKnight hk hm = hk { knightHealth = (knightHealth hk) - (monsterAttack hm) }
+        hitMonster :: Monster -> Knight -> Monster
+        hitMonster hm hk  = hm { monsterHealth = (monsterHealth hm) - (knightAttack hk) }
+
+arthur :: Knight
+arthur = MkKnight "Arthur" 0 100 20 50
+
+boo :: Monster
+boo = MkMonster "Boo" "booooo...boo" 70 30 25
+
+deathclaw :: Monster
+deathclaw = MkMonster "Deathclaw" "ARGH..." 150 50 1000
 
 {- |
 =🛡= Sum types
@@ -460,6 +506,16 @@ Create a simple enumeration for the meal types (e.g. breakfast). The one who
 comes up with the most number of names wins the challenge. Use your creativity!
 -}
 
+data Meal
+    = Appetizers
+    | Breakfast
+    | Brunch
+    | Desserts
+    | Supper
+    | Dinner
+    | Lunch
+    | Snacks
+
 {- |
 =⚔️= Task 4
 
@@ -479,6 +535,51 @@ After defining the city, implement the following functions:
    complicated task, walls can be built only if the city has a castle
    and at least 10 living __people__ inside in all houses of the city totally.
 -}
+
+data Castle
+    = None
+    | Fortress String
+    | Tower String
+
+data PowerPlace
+    = Library
+    | Church
+
+data House
+    = Hut
+    | Dwelling
+    | Cottage
+    | Palace
+
+data MagicCity = MkMagicCity
+    { cityCastle :: Castle
+    , cityPower :: PowerPlace
+    , cityBuildings :: [House]
+    }
+
+buildCastle :: String -> MagicCity -> MagicCity
+buildCastle castleName c = case cityCastle c of
+    Fortress _ -> c { cityCastle = Fortress castleName }
+    _ -> c { cityCastle = Tower castleName }
+
+buildHouse :: House -> MagicCity -> MagicCity
+buildHouse house c =
+    c { cityBuildings = house : cityBuildings c }
+
+sizeHouse :: House -> Int
+sizeHouse house = case house of
+    Hut       -> 1
+    Dwelling  -> 2
+    Cottage   -> 3
+    Palace    -> 4
+
+buildWalls :: MagicCity -> MagicCity
+buildWalls c = case cityCastle c of
+    Tower castleName ->
+        if sum (map sizeHouse (cityBuildings c)) >= 10
+        then c { cityCastle = Fortress castleName }
+        else c
+    _ -> c
 
 {-
 =🛡= Newtypes
@@ -560,22 +661,31 @@ introducing extra newtypes.
 🕯 HINT: if you complete this task properly, you don't need to change the
     implementation of the "hitPlayer" function at all!
 -}
+
+newtype Attack = MkAttack Int
+newtype Strength = MkStrength Int
+newtype Damage = MkDamage Int
+newtype Defence = MkDefence Int
+newtype Armor = MkArmor Int
+newtype Health = MkHealth Int
+newtype Dexterity = MkDexterity Int
+
 data Player = Player
-    { playerHealth    :: Int
-    , playerArmor     :: Int
-    , playerAttack    :: Int
-    , playerDexterity :: Int
-    , playerStrength  :: Int
+    { playerHealth    :: Health
+    , playerArmor     :: Armor
+    , playerAttack    :: Attack
+    , playerDexterity :: Dexterity
+    , playerStrength  :: Strength
     }
 
-calculatePlayerDamage :: Int -> Int -> Int
-calculatePlayerDamage attack strength = attack + strength
+calculatePlayerDamage :: Attack -> Strength -> Damage
+calculatePlayerDamage (MkAttack a) (MkStrength s) = MkDamage (a + s)
 
-calculatePlayerDefense :: Int -> Int -> Int
-calculatePlayerDefense armor dexterity = armor * dexterity
+calculatePlayerDefense :: Armor -> Dexterity -> Defence
+calculatePlayerDefense (MkArmor a) (MkDexterity d) = MkDefence (a * d)
 
-calculatePlayerHit :: Int -> Int -> Int -> Int
-calculatePlayerHit damage defense health = health + defense - damage
+calculatePlayerHit :: Damage -> Defence -> Health -> Health
+calculatePlayerHit (MkDamage da) (MkDefence de) (MkHealth h) = MkHealth (h + de - da)
 
 -- The second player hits first player and the new first player is returned
 hitPlayer :: Player -> Player -> Player
@@ -752,6 +862,15 @@ parametrise data types in places where values can be of any general type.
 🕯 HINT: 'Maybe' that some standard types we mentioned above are useful for
   maybe-treasure ;)
 -}
+data TreasureChest x = TreasureChest
+    { treasureChestGold :: Int
+    , treasureChestLoot :: x
+    }
+
+data DragonLair treasure power = MkDragonLair
+    { dragonLairChest :: Maybe (TreasureChest treasure)
+    , dragonLairPower :: power
+    }
 
 {-
 =🛡= Typeclasses
