@@ -1029,6 +1029,27 @@ Implement instances of "Append" for the following types:
 class Append a where
     append :: a -> a -> a
 
+newtype Gold = Gold Int
+    deriving (Show)
+instance Append Gold where
+    append :: Gold -> Gold -> Gold
+    append (Gold a) (Gold b ) = Gold (a + b)
+
+from :: Gold
+from = Gold 50
+
+to :: Gold
+to = Gold 20
+
+instance Append [a] where
+    append :: [a] -> [a] -> [a]
+    append = (++)
+
+instance (Append a) => Append (Maybe a) where
+    append :: Maybe a -> Maybe a -> Maybe a
+    append (Just x) (Just y) = Just(append x y)
+    append Nothing n = n
+    append n Nothing = n
 
 {-
 =🛡= Standard Typeclasses and Deriving
@@ -1089,7 +1110,31 @@ implement the following functions:
 
 🕯 HINT: to implement this task, derive some standard typeclasses
 -}
+data WeekDays
+    = Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saturday
+    | Sunday
+    deriving (Show, Read, Eq, Ord, Enum)
 
+isWeekend :: WeekDays -> Bool
+isWeekend d = d == Saturday || d == Sunday
+
+nextDay :: WeekDays -> WeekDays
+nextDay d
+    | d == Sunday = Monday
+    | otherwise = toEnum ((fromEnum d) + 1)
+
+daysToParty :: WeekDays -> Int
+daysToParty d
+    | d >= Friday = 7 - dayNum + daysToParty Monday
+    | otherwise = fromEnum Friday - dayNum
+      where
+        dayNum :: Int
+        dayNum = fromEnum d
 {-
 =💣= Task 9*
 
