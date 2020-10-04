@@ -350,7 +350,7 @@ data Book = MkBook
     , bookPages     :: Int
     , bookIsRead    :: Bool
     , bookIsbn      :: String
-    , nookGenres    :: [String]
+    , bookGenres    :: [String]
     } deriving (Show)
 
 {- |
@@ -1172,33 +1172,7 @@ properties using typeclasses, but they are different data types in the end.
 Implement data types and typeclasses, describing such a battle between two
 contestants, and write a function that decides the outcome of a fight!
 -}
-{-
-data Loot
-    = Sword Int  -- attack
-    | Shield Int  -- defence
-    | WizardStaff Power SpellLevel
-@
 
-You can create values of the sum types by using different constructors:
-
-@
-woodenSword :: Loot
-woodenSword = Sword 2
-
-adamantiumShield :: Loot
-adamantiumShield = Shield 3000
-@
-
-And you can pattern match on different constructors as well.
-
-@
-acceptLoot :: Loot -> String
-acceptLoot loot = case loot of
-    Sword _ -> "Thanks! That's a great sword!"
-    Shield _ -> "I'll accept this shield as a reward!"
-    WizardStaff _ _ -> "What?! I'm not a wizard, take it back!"
-
--}
 actionStep :: [a] -> [a]
 actionStep [] = []
 actionStep a = last a : init a
