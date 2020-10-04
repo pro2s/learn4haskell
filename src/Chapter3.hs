@@ -411,15 +411,6 @@ fight k m
         hitMonster :: Monster -> Knight -> Monster
         hitMonster hm hk  = hm { monsterHealth = (monsterHealth hm) - (knightAttack hk) }
 
-arthur :: Knight
-arthur = MkKnight "Arthur" 0 100 20 50
-
-boo :: Monster
-boo = MkMonster "Boo" "booooo...boo" 70 30 25
-
-deathclaw :: Monster
-deathclaw = MkMonster "Deathclaw" "ARGH..." 150 50 1000
-
 {- |
 =🛡= Sum types
 
@@ -1264,13 +1255,6 @@ superFight a b
         RunAction -> superFight b (step a)
         DrinkAction h -> superFight b (step (drink h a))
         CastAction d -> superFight b (step (cast d a))
-
-dobrynya :: FighterKnight
-dobrynya = FighterKnight "Dobrynya Nikitich" (MkAttack 50) 100 50 [AttackAction, DrinkAction (MkHealth 25)]
-gorynych :: FighterMonster
-gorynych = FighterMonster "Zmey Gorynych" (MkAttack 25) 200 [AttackAction, RunAction]
-win :: String
-win = superFight dobrynya gorynych
 
 {-
 You did it! Now it is time to the open pull request with your changes
