@@ -663,11 +663,14 @@ introducing extra newtypes.
 -}
 
 newtype Attack = MkAttack Int
+    deriving (Show)
 newtype Strength = MkStrength Int
 newtype Damage = MkDamage Int
 newtype Defence = MkDefence Int
+    deriving (Show)
 newtype Armor = MkArmor Int
 newtype Health = MkHealth Int
+    deriving (Show)
 newtype Dexterity = MkDexterity Int
 
 data Player = Player
@@ -1169,7 +1172,131 @@ properties using typeclasses, but they are different data types in the end.
 Implement data types and typeclasses, describing such a battle between two
 contestants, and write a function that decides the outcome of a fight!
 -}
+{-
+data Loot
+    = Sword Int  -- attack
+    | Shield Int  -- defence
+    | WizardStaff Power SpellLevel
+@
 
+You can create values of the sum types by using different constructors:
+
+@
+woodenSword :: Loot
+woodenSword = Sword 2
+
+adamantiumShield :: Loot
+adamantiumShield = Shield 3000
+@
+
+And you can pattern match on different constructors as well.
+
+@
+acceptLoot :: Loot -> String
+acceptLoot loot = case loot of
+    Sword _ -> "Thanks! That's a great sword!"
+    Shield _ -> "I'll accept this shield as a reward!"
+    WizardStaff _ _ -> "What?! I'm not a wizard, take it back!"
+
+-}
+actionStep :: [a] -> [a]
+actionStep [] = []
+actionStep a = last a : init a
+
+data Action
+  = AttackAction
+  | DrinkAction Health
+  | CastAction Defence
+  | RunAction
+    deriving (Show)
+
+data FighterKnight = FighterKnight
+    { fighterKnightName      :: String
+    , fighterKnightAttack    :: Attack
+    , fighterKnightHealth    :: Int
+    , fighterKnightDefence   :: Int
+    , fighterKnightActions   :: [Action]
+    } deriving (Show)
+
+data FighterMonster = FighterMonster
+    { fighterMonsterName      :: String
+    , fighterMonsterAttack    :: Attack
+    , fighterMonsterHealth    :: Int
+    , fighterMonsterActions   :: [Action]
+    } deriving (Show)
+
+class Fighter a where
+  getName :: a -> String
+  getAttack :: a -> Attack
+  getHealth :: a -> Int
+  getAction :: a -> Action
+  isDied :: a -> Bool
+  attack :: Attack -> a -> a
+  step :: a -> a
+  cast :: Defence -> a -> a
+  drink :: Health -> a -> a
+
+instance Fighter FighterKnight where
+    getName :: FighterKnight -> String
+    getName = fighterKnightName
+    getAttack :: FighterKnight -> Attack
+    getAttack = fighterKnightAttack
+    getHealth :: FighterKnight -> Int
+    getHealth = fighterKnightHealth
+    getAction :: FighterKnight -> Action
+    getAction f = head (fighterKnightActions f)
+    isDied :: FighterKnight -> Bool
+    isDied f = fighterKnightHealth f <= 0
+    step :: FighterKnight -> FighterKnight
+    step f = f { fighterKnightActions = actionStep (fighterKnightActions f) }
+    drink :: Health -> FighterKnight -> FighterKnight
+    drink (MkHealth h) f = f { fighterKnightHealth = fighterKnightHealth f + h }
+    cast :: Defence -> FighterKnight -> FighterKnight
+    cast (MkDefence d) f = f { fighterKnightDefence = fighterKnightDefence f + d }
+    attack :: Attack -> FighterKnight -> FighterKnight
+    attack (MkAttack a) f =
+        let health
+                | fighterKnightDefence f > a = (getHealth f) - div a 10
+                | otherwise = (getHealth f) - a
+        in f { fighterKnightHealth = health }
+
+instance Fighter FighterMonster where
+    getName :: FighterMonster -> String
+    getName = fighterMonsterName
+    getAttack :: FighterMonster -> Attack
+    getAttack = fighterMonsterAttack
+    getHealth :: FighterMonster -> Int
+    getHealth = fighterMonsterHealth
+    getAction :: FighterMonster -> Action
+    getAction f = head (fighterMonsterActions f)
+    isDied :: FighterMonster -> Bool
+    isDied f = fighterMonsterHealth f <= 0
+    step :: FighterMonster -> FighterMonster
+    step f = f { fighterMonsterActions = actionStep (fighterMonsterActions f) }
+    attack :: Attack -> FighterMonster -> FighterMonster
+    attack (MkAttack a) f = f { fighterMonsterHealth = (getHealth f) - a }
+    drink :: Health -> FighterMonster -> FighterMonster
+    drink _ m = m
+    cast :: Defence -> FighterMonster -> FighterMonster
+    cast _ m = m
+
+superFight :: (Fighter a) => (Fighter b) => a -> b -> String
+superFight a b
+    | isDied a = getName b
+    | isDied b = getName a
+    | isDied b || isDied b = "Draw"
+    | otherwise = case getAction a of
+        AttackAction -> superFight (attack (getAttack a) b) (step a)
+        RunAction -> superFight b (step a)
+        DrinkAction h -> superFight b (step (drink h a))
+        CastAction d -> superFight b (step (cast d a))
+
+dobrynya :: FighterKnight
+dobrynya = FighterKnight "Dobrynya Nikitich" (MkAttack 50) 100 50 [AttackAction, DrinkAction (MkHealth 25)]
+gorynych :: FighterMonster
+gorynych = FighterMonster "Zmey Gorynych" (MkAttack 25) 200 [AttackAction, RunAction]
+win :: String
+win = superFight dobrynya gorynych
 
 {-
 You did it! Now it is time to the open pull request with your changes
