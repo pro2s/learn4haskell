@@ -14,9 +14,9 @@ deathclaw :: Monster
 deathclaw = MkMonster "Deathclaw" "ARGH..." 150 50 1000
 
 dobrynya :: FighterKnight
-dobrynya = FighterKnight "Dobrynya Nikitich" (MkAttack 50) 100 50 [AttackAction, DrinkAction (MkHealth 25)]
+dobrynya = FighterKnight "Dobrynya Nikitich" (MkAttack 50) (MkHealth 100) (MkDefence 50) [AttackAction, DrinkAction (MkHealth 25)]
 gorynych :: FighterMonster
-gorynych = FighterMonster "Zmey Gorynych" (MkAttack 25) 200 [AttackAction, RunAction]
+gorynych = FighterMonster "Zmey Gorynych" (MkAttack 25) (MkHealth 200) [AttackAction, RunAction]
 
 chapter3 :: Spec
 chapter3 = describe "Chapter3" $ do
@@ -24,6 +24,9 @@ chapter3 = describe "Chapter3" $ do
         describe "Task 2" $ do
             it "Arthur against Boo" $ fight arthur boo `shouldBe` 75
             it "Arthur against Deathclaw" $ fight arthur deathclaw `shouldBe` -1
+        describe "Task 8" $ do
+            it "Start week" $ daysToParty Monday `shouldBe` 4
+            it "After party" $ daysToParty Saturday `shouldBe` 6
     describe "Chapter3Advanced" $ do
         describe "Task9*" $ do
             it "Dobrynya against Gorynych" $ superFight dobrynya gorynych `shouldBe` "Dobrynya Nikitich"

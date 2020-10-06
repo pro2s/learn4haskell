@@ -654,14 +654,14 @@ introducing extra newtypes.
 -}
 
 newtype Attack = MkAttack Int
-    deriving (Show)
+    deriving (Show, Eq, Ord)
 newtype Strength = MkStrength Int
 newtype Damage = MkDamage Int
 newtype Defence = MkDefence Int
-    deriving (Show)
+    deriving (Show, Eq, Ord)
 newtype Armor = MkArmor Int
 newtype Health = MkHealth Int
-    deriving (Show)
+    deriving (Show, Eq)
 newtype Dexterity = MkDexterity Int
 
 data Player = Player
@@ -1120,15 +1120,11 @@ isWeekend d = d == Saturday || d == Sunday
 nextDay :: WeekDays -> WeekDays
 nextDay d
     | d == Sunday = Monday
-    | otherwise = toEnum ((fromEnum d) + 1)
+    | otherwise = succ d
 
 daysToParty :: WeekDays -> Int
-daysToParty d
-    | d >= Friday = 7 - dayNum + daysToParty Monday
-    | otherwise = fromEnum Friday - dayNum
-      where
-        dayNum :: Int
-        dayNum = fromEnum d
+daysToParty day = mod (fromEnum Friday - fromEnum day)  7
+
 {-
 =💣= Task 9*
 
@@ -1178,70 +1174,83 @@ data Action
 data FighterKnight = FighterKnight
     { fighterKnightName      :: String
     , fighterKnightAttack    :: Attack
-    , fighterKnightHealth    :: Int
-    , fighterKnightDefence   :: Int
+    , fighterKnightHealth    :: Health
+    , fighterKnightDefence   :: Defence
     , fighterKnightActions   :: [Action]
     } deriving (Show)
 
 data FighterMonster = FighterMonster
     { fighterMonsterName      :: String
     , fighterMonsterAttack    :: Attack
-    , fighterMonsterHealth    :: Int
+    , fighterMonsterHealth    :: Health
     , fighterMonsterActions   :: [Action]
     } deriving (Show)
 
 class Fighter a where
   getName :: a -> String
   getAttack :: a -> Attack
-  getHealth :: a -> Int
+  getHealth :: a -> Health
   getAction :: a -> Action
   isDied :: a -> Bool
   attack :: Attack -> a -> a
   step :: a -> a
   cast :: Defence -> a -> a
-  drink :: Health -> a -> a
+  heal :: Health -> a -> a
+
+calculateFighterHit :: Attack -> Health -> Health
+calculateFighterHit (MkAttack a) (MkHealth h) = MkHealth (h - a)
+
+defenceAttack :: FighterKnight -> Attack -> Attack
+defenceAttack f (MkAttack a)
+    | (fighterKnightDefence f) > (MkDefence a) = MkAttack (div a 10)
+    | otherwise = MkAttack a
+
+isCorpse :: Health -> Bool
+isCorpse (MkHealth h) = h <= 0
+
+addHealth :: Health -> Health -> Health
+addHealth (MkHealth h) (MkHealth ah) = MkHealth (h + ah)
+
+addDefence :: Defence -> Defence -> Defence
+addDefence (MkDefence d) (MkDefence ad) = MkDefence (d + ad)
 
 instance Fighter FighterKnight where
     getName :: FighterKnight -> String
     getName = fighterKnightName
     getAttack :: FighterKnight -> Attack
     getAttack = fighterKnightAttack
-    getHealth :: FighterKnight -> Int
+    getHealth :: FighterKnight -> Health
     getHealth = fighterKnightHealth
     getAction :: FighterKnight -> Action
-    getAction f = head (fighterKnightActions f)
+    getAction = head . fighterKnightActions
     isDied :: FighterKnight -> Bool
-    isDied f = fighterKnightHealth f <= 0
+    isDied = isCorpse . fighterKnightHealth
     step :: FighterKnight -> FighterKnight
     step f = f { fighterKnightActions = actionStep (fighterKnightActions f) }
-    drink :: Health -> FighterKnight -> FighterKnight
-    drink (MkHealth h) f = f { fighterKnightHealth = fighterKnightHealth f + h }
+    heal :: Health -> FighterKnight -> FighterKnight
+    heal h f = f { fighterKnightHealth = addHealth (fighterKnightHealth f) h }
     cast :: Defence -> FighterKnight -> FighterKnight
-    cast (MkDefence d) f = f { fighterKnightDefence = fighterKnightDefence f + d }
+    cast d f = f { fighterKnightDefence = addDefence (fighterKnightDefence f) d }
     attack :: Attack -> FighterKnight -> FighterKnight
-    attack (MkAttack a) f =
-        let health
-                | fighterKnightDefence f > a = (getHealth f) - div a 10
-                | otherwise = (getHealth f) - a
-        in f { fighterKnightHealth = health }
+    attack a f = f { fighterKnightHealth = calculateFighterHit (defenceAttack f a) (getHealth f) }
 
 instance Fighter FighterMonster where
     getName :: FighterMonster -> String
     getName = fighterMonsterName
     getAttack :: FighterMonster -> Attack
     getAttack = fighterMonsterAttack
-    getHealth :: FighterMonster -> Int
+    getHealth :: FighterMonster -> Health
     getHealth = fighterMonsterHealth
     getAction :: FighterMonster -> Action
-    getAction f = head (fighterMonsterActions f)
+    getAction = head . fighterMonsterActions
     isDied :: FighterMonster -> Bool
-    isDied f = fighterMonsterHealth f <= 0
+    isDied = isCorpse . fighterMonsterHealth
     step :: FighterMonster -> FighterMonster
     step f = f { fighterMonsterActions = actionStep (fighterMonsterActions f) }
     attack :: Attack -> FighterMonster -> FighterMonster
-    attack (MkAttack a) f = f { fighterMonsterHealth = (getHealth f) - a }
-    drink :: Health -> FighterMonster -> FighterMonster
-    drink _ m = m
+    attack a f = f { fighterMonsterHealth = calculateFighterHit a (getHealth f) }
+    heal :: Health -> FighterMonster -> FighterMonster
+    heal _ m = m
     cast :: Defence -> FighterMonster -> FighterMonster
     cast _ m = m
 
@@ -1249,11 +1258,10 @@ superFight :: (Fighter a) => (Fighter b) => a -> b -> String
 superFight a b
     | isDied a = getName b
     | isDied b = getName a
-    | isDied b || isDied b = "Draw"
     | otherwise = case getAction a of
         AttackAction -> superFight (attack (getAttack a) b) (step a)
         RunAction -> superFight b (step a)
-        DrinkAction h -> superFight b (step (drink h a))
+        DrinkAction h -> superFight b (step (heal h a))
         CastAction d -> superFight b (step (cast d a))
 
 {-
