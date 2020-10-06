@@ -344,6 +344,15 @@ of a book, but you are not limited only by the book properties we described.
 Create your own book type of your dreams!
 -}
 
+data Book = MkBook
+    { bookAuthor    :: String
+    , bookCover     :: String
+    , bookPages     :: Int
+    , bookIsRead    :: Bool
+    , bookIsbn      :: String
+    , bookGenres    :: [String]
+    } deriving (Show)
+
 {- |
 =⚔️= Task 2
 
@@ -373,6 +382,34 @@ after the fight. The battle has the following possible outcomes:
    doesn't earn any money and keeps what they had before.
 
 -}
+
+data Knight = MkKnight
+    { knightName      :: String
+    , knightVictories :: Int
+    , knightHealth    :: Int
+    , knightAttack    :: Int
+    , knightGold      :: Int
+    } deriving (Show)
+
+data Monster = MkMonster
+    { monsterName     :: String
+    , monsterVoice    :: String
+    , monsterHealth   :: Int
+    , monsterAttack   :: Int
+    , monsterGold     :: Int
+    } deriving (Show)
+
+fight :: Knight -> Monster -> Int
+fight k m
+    | knightHealth k <= 0 = (-1)
+    | monsterHealth m <= knightAttack k = knightGold k + monsterGold m
+    | monsterHealth m > knightAttack k = fight (hitKnight k m) (hitMonster m k)
+    | otherwise = 0
+      where
+        hitKnight :: Knight -> Monster -> Knight
+        hitKnight hk hm = hk { knightHealth = (knightHealth hk) - (monsterAttack hm) }
+        hitMonster :: Monster -> Knight -> Monster
+        hitMonster hm hk  = hm { monsterHealth = (monsterHealth hm) - (knightAttack hk) }
 
 {- |
 =🛡= Sum types
@@ -460,6 +497,16 @@ Create a simple enumeration for the meal types (e.g. breakfast). The one who
 comes up with the most number of names wins the challenge. Use your creativity!
 -}
 
+data Meal
+    = Appetizers
+    | Breakfast
+    | Brunch
+    | Desserts
+    | Supper
+    | Dinner
+    | Lunch
+    | Snacks
+
 {- |
 =⚔️= Task 4
 
@@ -479,6 +526,51 @@ After defining the city, implement the following functions:
    complicated task, walls can be built only if the city has a castle
    and at least 10 living __people__ inside in all houses of the city totally.
 -}
+
+data Castle
+    = None
+    | Fortress String
+    | Tower String
+
+data PowerPlace
+    = Library
+    | Church
+
+data House
+    = Hut
+    | Dwelling
+    | Cottage
+    | Palace
+
+data MagicCity = MkMagicCity
+    { cityCastle :: Castle
+    , cityPower :: PowerPlace
+    , cityBuildings :: [House]
+    }
+
+buildCastle :: String -> MagicCity -> MagicCity
+buildCastle castleName c = case cityCastle c of
+    Fortress _ -> c { cityCastle = Fortress castleName }
+    _ -> c { cityCastle = Tower castleName }
+
+buildHouse :: House -> MagicCity -> MagicCity
+buildHouse house c =
+    c { cityBuildings = house : cityBuildings c }
+
+sizeHouse :: House -> Int
+sizeHouse house = case house of
+    Hut       -> 1
+    Dwelling  -> 2
+    Cottage   -> 3
+    Palace    -> 4
+
+buildWalls :: MagicCity -> MagicCity
+buildWalls c = case cityCastle c of
+    Tower castleName ->
+        if sum (map sizeHouse (cityBuildings c)) >= 10
+        then c { cityCastle = Fortress castleName }
+        else c
+    _ -> c
 
 {-
 =🛡= Newtypes
@@ -560,22 +652,34 @@ introducing extra newtypes.
 🕯 HINT: if you complete this task properly, you don't need to change the
     implementation of the "hitPlayer" function at all!
 -}
+
+newtype Attack = MkAttack Int
+    deriving (Show, Eq, Ord)
+newtype Strength = MkStrength Int
+newtype Damage = MkDamage Int
+newtype Defence = MkDefence Int
+    deriving (Show, Eq, Ord)
+newtype Armor = MkArmor Int
+newtype Health = MkHealth Int
+    deriving (Show, Eq)
+newtype Dexterity = MkDexterity Int
+
 data Player = Player
-    { playerHealth    :: Int
-    , playerArmor     :: Int
-    , playerAttack    :: Int
-    , playerDexterity :: Int
-    , playerStrength  :: Int
+    { playerHealth    :: Health
+    , playerArmor     :: Armor
+    , playerAttack    :: Attack
+    , playerDexterity :: Dexterity
+    , playerStrength  :: Strength
     }
 
-calculatePlayerDamage :: Int -> Int -> Int
-calculatePlayerDamage attack strength = attack + strength
+calculatePlayerDamage :: Attack -> Strength -> Damage
+calculatePlayerDamage (MkAttack a) (MkStrength s) = MkDamage (a + s)
 
-calculatePlayerDefense :: Int -> Int -> Int
-calculatePlayerDefense armor dexterity = armor * dexterity
+calculatePlayerDefense :: Armor -> Dexterity -> Defence
+calculatePlayerDefense (MkArmor a) (MkDexterity d) = MkDefence (a * d)
 
-calculatePlayerHit :: Int -> Int -> Int -> Int
-calculatePlayerHit damage defense health = health + defense - damage
+calculatePlayerHit :: Damage -> Defence -> Health -> Health
+calculatePlayerHit (MkDamage da) (MkDefence de) (MkHealth h) = MkHealth (h + de - da)
 
 -- The second player hits first player and the new first player is returned
 hitPlayer :: Player -> Player -> Player
@@ -752,6 +856,15 @@ parametrise data types in places where values can be of any general type.
 🕯 HINT: 'Maybe' that some standard types we mentioned above are useful for
   maybe-treasure ;)
 -}
+data TreasureChest x = TreasureChest
+    { treasureChestGold :: Int
+    , treasureChestLoot :: x
+    }
+
+data DragonLair treasure power = MkDragonLair
+    { dragonLairChest :: Maybe (TreasureChest treasure)
+    , dragonLairPower :: power
+    }
 
 {-
 =🛡= Typeclasses
@@ -910,6 +1023,27 @@ Implement instances of "Append" for the following types:
 class Append a where
     append :: a -> a -> a
 
+newtype Gold = Gold Int
+    deriving (Show)
+instance Append Gold where
+    append :: Gold -> Gold -> Gold
+    append (Gold a) (Gold b ) = Gold (a + b)
+
+from :: Gold
+from = Gold 50
+
+to :: Gold
+to = Gold 20
+
+instance Append [a] where
+    append :: [a] -> [a] -> [a]
+    append = (++)
+
+instance (Append a) => Append (Maybe a) where
+    append :: Maybe a -> Maybe a -> Maybe a
+    append (Just x) (Just y) = Just(append x y)
+    append Nothing n = n
+    append n Nothing = n
 
 {-
 =🛡= Standard Typeclasses and Deriving
@@ -970,6 +1104,26 @@ implement the following functions:
 
 🕯 HINT: to implement this task, derive some standard typeclasses
 -}
+data WeekDays
+    = Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saturday
+    | Sunday
+    deriving (Show, Read, Eq, Ord, Enum)
+
+isWeekend :: WeekDays -> Bool
+isWeekend d = d == Saturday || d == Sunday
+
+nextDay :: WeekDays -> WeekDays
+nextDay d
+    | d == Sunday = Monday
+    | otherwise = succ d
+
+daysToParty :: WeekDays -> Int
+daysToParty day = mod (fromEnum Friday - fromEnum day)  7
 
 {-
 =💣= Task 9*
@@ -1006,6 +1160,107 @@ Implement data types and typeclasses, describing such a battle between two
 contestants, and write a function that decides the outcome of a fight!
 -}
 
+actionStep :: [a] -> [a]
+actionStep [] = []
+actionStep a = last a : init a
+
+data Action
+  = AttackAction
+  | DrinkAction Health
+  | CastAction Defence
+  | RunAction
+    deriving (Show)
+
+data FighterKnight = FighterKnight
+    { fighterKnightName      :: String
+    , fighterKnightAttack    :: Attack
+    , fighterKnightHealth    :: Health
+    , fighterKnightDefence   :: Defence
+    , fighterKnightActions   :: [Action]
+    } deriving (Show)
+
+data FighterMonster = FighterMonster
+    { fighterMonsterName      :: String
+    , fighterMonsterAttack    :: Attack
+    , fighterMonsterHealth    :: Health
+    , fighterMonsterActions   :: [Action]
+    } deriving (Show)
+
+class Fighter a where
+  getName :: a -> String
+  getAttack :: a -> Attack
+  getHealth :: a -> Health
+  getAction :: a -> Action
+  attack :: Attack -> a -> a
+  step :: a -> a
+  cast :: Defence -> a -> a
+  heal :: Health -> a -> a
+
+calculateFighterHit :: Attack -> Health -> Health
+calculateFighterHit (MkAttack a) (MkHealth h) = MkHealth (h - a)
+
+defenceAttack :: FighterKnight -> Attack -> Attack
+defenceAttack f (MkAttack a)
+    | (fighterKnightDefence f) > (MkDefence a) = MkAttack (div a 10)
+    | otherwise = MkAttack a
+
+isCorpse :: Health -> Bool
+isCorpse (MkHealth h) = h <= 0
+
+addHealth :: Health -> Health -> Health
+addHealth (MkHealth h) (MkHealth ah) = MkHealth (h + ah)
+
+addDefence :: Defence -> Defence -> Defence
+addDefence (MkDefence d) (MkDefence ad) = MkDefence (d + ad)
+
+isDied :: (Fighter f) => f -> Bool
+isDied = isCorpse . getHealth
+
+instance Fighter FighterKnight where
+    getName :: FighterKnight -> String
+    getName = fighterKnightName
+    getAttack :: FighterKnight -> Attack
+    getAttack = fighterKnightAttack
+    getHealth :: FighterKnight -> Health
+    getHealth = fighterKnightHealth
+    getAction :: FighterKnight -> Action
+    getAction = head . fighterKnightActions
+    step :: FighterKnight -> FighterKnight
+    step f = f { fighterKnightActions = actionStep (fighterKnightActions f) }
+    heal :: Health -> FighterKnight -> FighterKnight
+    heal h f = f { fighterKnightHealth = addHealth (fighterKnightHealth f) h }
+    cast :: Defence -> FighterKnight -> FighterKnight
+    cast d f = f { fighterKnightDefence = addDefence (fighterKnightDefence f) d }
+    attack :: Attack -> FighterKnight -> FighterKnight
+    attack a f = f { fighterKnightHealth = calculateFighterHit (defenceAttack f a) (getHealth f) }
+
+instance Fighter FighterMonster where
+    getName :: FighterMonster -> String
+    getName = fighterMonsterName
+    getAttack :: FighterMonster -> Attack
+    getAttack = fighterMonsterAttack
+    getHealth :: FighterMonster -> Health
+    getHealth = fighterMonsterHealth
+    getAction :: FighterMonster -> Action
+    getAction = head . fighterMonsterActions
+    step :: FighterMonster -> FighterMonster
+    step f = f { fighterMonsterActions = actionStep (fighterMonsterActions f) }
+    attack :: Attack -> FighterMonster -> FighterMonster
+    attack a f = f { fighterMonsterHealth = calculateFighterHit a (getHealth f) }
+    heal :: Health -> FighterMonster -> FighterMonster
+    heal _ m = m
+    cast :: Defence -> FighterMonster -> FighterMonster
+    cast _ m = m
+
+superFight :: (Fighter a) => (Fighter b) => a -> b -> String
+superFight a b
+    | isDied a = getName b
+    | isDied b = getName a
+    | otherwise = case getAction a of
+        AttackAction -> superFight (attack (getAttack a) b) (step a)
+        RunAction -> superFight b (step a)
+        DrinkAction h -> superFight b (step (heal h a))
+        CastAction d -> superFight b (step (cast d a))
 
 {-
 You did it! Now it is time to the open pull request with your changes
