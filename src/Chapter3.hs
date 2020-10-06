@@ -1191,7 +1191,6 @@ class Fighter a where
   getAttack :: a -> Attack
   getHealth :: a -> Health
   getAction :: a -> Action
-  isDied :: a -> Bool
   attack :: Attack -> a -> a
   step :: a -> a
   cast :: Defence -> a -> a
@@ -1214,6 +1213,9 @@ addHealth (MkHealth h) (MkHealth ah) = MkHealth (h + ah)
 addDefence :: Defence -> Defence -> Defence
 addDefence (MkDefence d) (MkDefence ad) = MkDefence (d + ad)
 
+isDied :: (Fighter f) => f -> Bool
+isDied = isCorpse . getHealth
+
 instance Fighter FighterKnight where
     getName :: FighterKnight -> String
     getName = fighterKnightName
@@ -1223,8 +1225,6 @@ instance Fighter FighterKnight where
     getHealth = fighterKnightHealth
     getAction :: FighterKnight -> Action
     getAction = head . fighterKnightActions
-    isDied :: FighterKnight -> Bool
-    isDied = isCorpse . fighterKnightHealth
     step :: FighterKnight -> FighterKnight
     step f = f { fighterKnightActions = actionStep (fighterKnightActions f) }
     heal :: Health -> FighterKnight -> FighterKnight
@@ -1243,8 +1243,6 @@ instance Fighter FighterMonster where
     getHealth = fighterMonsterHealth
     getAction :: FighterMonster -> Action
     getAction = head . fighterMonsterActions
-    isDied :: FighterMonster -> Bool
-    isDied = isCorpse . fighterMonsterHealth
     step :: FighterMonster -> FighterMonster
     step f = f { fighterMonsterActions = actionStep (fighterMonsterActions f) }
     attack :: Attack -> FighterMonster -> FighterMonster
