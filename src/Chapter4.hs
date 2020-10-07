@@ -497,7 +497,7 @@ Implement the 'Applicative' instance for our 'List' type.
 
 instance Applicative List where
     pure :: a -> List a
-    pure = Empty
+    pure x = Cons x Empty
 
     (<*>) :: List (a -> b) -> List a -> List b
     Empty <*> _ = Empty
@@ -630,6 +630,13 @@ Implement the 'Monad' instance for our lists.
   maybe a few) to flatten lists of lists to a single list.
 -}
 
+sumList :: List (List a) -> List a
+sumList Empty = Empty
+sumList (Cons x xs) = append x (sumList xs)
+
+instance Monad List where
+    (>>=) :: List a -> (a -> List b) -> List b
+    l >>= f = sumList (fmap f l)
 
 {- |
 =💣= Task 8*: Before the Final Boss
@@ -647,8 +654,9 @@ Can you implement a monad version of AND, polymorphic over any monad?
 
 🕯 HINT: Use "(>>=)", "pure" and anonymous function
 -}
+
 andM :: (Monad m) => m Bool -> m Bool -> m Bool
-andM = error "andM: Not implemented!"
+andM ma mb = ma >>= \a -> if a then mb else pure False
 
 {- |
 =🐉= Task 9*: Final Dungeon Boss
@@ -692,6 +700,26 @@ Specifically,
  ❃ Implement the function to convert Tree to list
 -}
 
+data Tree a = None | Node a (Tree a) (Tree a)
+  deriving (Eq, Show)
+instance Functor Tree where
+  fmap :: (a -> b) -> Tree a -> Tree b
+  fmap _ None = None
+  fmap f (Node x l r) = Node (f x) leftTree rightTree
+    where leftTree = fmap f l
+          rightTree = fmap f r
+
+reverseTree :: Tree a -> Tree a
+reverseTree None = None
+reverseTree (Node x l r) = Node x toLeft toRight
+  where toLeft = (reverseTree r)
+        toRight = (reverseTree l)
+
+treeToList :: Tree a -> [a]
+treeToList None = []
+treeToList (Node x l r) = x : leftList ++ rightList
+  where leftList = (treeToList l)
+        rightList = (treeToList r)
 
 {-
 You did it! Now it is time to the open pull request with your changes
