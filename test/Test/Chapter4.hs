@@ -51,7 +51,7 @@ chapter4normal = describe "Chapter4Normal" $ do
         it "Reward odd" $ (Reward 11 >>= halfSecret) `shouldBe` Trap "it's a trap"
 
 chapter4advanced :: Spec
-chapter4advanced = describe "Chapter4Advanced" $
+chapter4advanced = describe "Chapter4Advanced" $ do
     describe "andM" $ do
         it "Nothing - Nothing" $ andM Nothing Nothing `shouldBe` Nothing
         it "Nothing - Just" $ andM Nothing (Just True) `shouldBe` Nothing
@@ -59,6 +59,17 @@ chapter4advanced = describe "Chapter4Advanced" $
         it "Just False - Nothing" $ andM (Just False) Nothing `shouldBe` Just False
         it "Just - Just : False" $ andM (Just True) (Just False) `shouldBe` Just False
         it "Just - Just : True" $ andM (Just True) (Just True) `shouldBe` Just True
+    describe "Task 9*: Final Dungeon Boss" $ do
+        let tree :: Tree Integer
+            tree = Node 7
+                (Node 3 (Node 2 None None) (Node 5 None None))
+                (Node 11 None None)
+        let rTree :: Tree Integer
+            rTree = Node 7
+                (Node 11 None None)
+                (Node 3 (Node 5 None None) (Node 2 None None))
+        it "Reversed Tree" $ reverseTree tree `shouldBe` rTree
+        it "Tree is List" $ treeToList tree `shouldBe` [7, 3, 2, 5, 11]
 
 halfSecret :: Int -> Secret String Int
 halfSecret n
