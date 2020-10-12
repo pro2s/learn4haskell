@@ -14,9 +14,9 @@ deathclaw :: Monster
 deathclaw = MkMonster "Deathclaw" "ARGH..." 150 50 1000
 
 dobrynya :: FighterKnight
-dobrynya = FighterKnight "Dobrynya Nikitich" (MkAttack 50) (MkHealth 100) (MkDefence 50) [AttackAction, DrinkAction (MkHealth 25)]
+dobrynya = FighterKnight "Dobrynya Nikitich" (MkAttack 50) (Health 100) (Defence 50) [AttackAction, DrinkAction (Health 25)]
 gorynych :: FighterMonster
-gorynych = FighterMonster "Zmey Gorynych" (MkAttack 25) (MkHealth 200) [AttackAction, RunAction]
+gorynych = FighterMonster "Zmey Gorynych" (MkAttack 25) (Health 200) [AttackAction, RunAction]
 
 chapter3 :: Spec
 chapter3 = describe "Chapter3" $ do

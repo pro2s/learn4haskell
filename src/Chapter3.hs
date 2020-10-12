@@ -50,6 +50,7 @@ signatures in places where you can't by default. We believe it's helpful to
 provide more top-level type signatures, especially when learning Haskell.
 -}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Chapter3 where
 
@@ -657,11 +658,12 @@ newtype Attack = MkAttack Int
     deriving (Show, Eq, Ord)
 newtype Strength = MkStrength Int
 newtype Damage = MkDamage Int
-newtype Defence = MkDefence Int
-    deriving (Show, Eq, Ord)
+newtype Defence = Defence Int
+    deriving (Show, Eq, Ord, Num)
 newtype Armor = MkArmor Int
-newtype Health = MkHealth Int
-    deriving (Show, Eq)
+newtype Health = Health Int
+    deriving (Show, Eq, Ord, Num)
+
 newtype Dexterity = MkDexterity Int
 
 data Player = Player
@@ -676,10 +678,10 @@ calculatePlayerDamage :: Attack -> Strength -> Damage
 calculatePlayerDamage (MkAttack a) (MkStrength s) = MkDamage (a + s)
 
 calculatePlayerDefense :: Armor -> Dexterity -> Defence
-calculatePlayerDefense (MkArmor a) (MkDexterity d) = MkDefence (a * d)
+calculatePlayerDefense (MkArmor a) (MkDexterity d) = Defence (a * d)
 
 calculatePlayerHit :: Damage -> Defence -> Health -> Health
-calculatePlayerHit (MkDamage da) (MkDefence de) (MkHealth h) = MkHealth (h + de - da)
+calculatePlayerHit (MkDamage da) (Defence de) (Health h) = Health (h + de - da)
 
 -- The second player hits first player and the new first player is returned
 hitPlayer :: Player -> Player -> Player
@@ -1197,24 +1199,15 @@ class Fighter a where
   heal :: Health -> a -> a
 
 calculateFighterHit :: Attack -> Health -> Health
-calculateFighterHit (MkAttack a) (MkHealth h) = MkHealth (h - a)
+calculateFighterHit (MkAttack a) (Health h) = Health (h - a)
 
 defenceAttack :: FighterKnight -> Attack -> Attack
 defenceAttack f (MkAttack a)
-    | (fighterKnightDefence f) > (MkDefence a) = MkAttack (div a 10)
+    | (fighterKnightDefence f) > (Defence a) = MkAttack (div a 10)
     | otherwise = MkAttack a
 
-isCorpse :: Health -> Bool
-isCorpse (MkHealth h) = h <= 0
-
-addHealth :: Health -> Health -> Health
-addHealth (MkHealth h) (MkHealth ah) = MkHealth (h + ah)
-
-addDefence :: Defence -> Defence -> Defence
-addDefence (MkDefence d) (MkDefence ad) = MkDefence (d + ad)
-
 isDied :: (Fighter f) => f -> Bool
-isDied = isCorpse . getHealth
+isDied f = (getHealth f) <= 0
 
 instance Fighter FighterKnight where
     getName :: FighterKnight -> String
@@ -1228,9 +1221,9 @@ instance Fighter FighterKnight where
     step :: FighterKnight -> FighterKnight
     step f = f { fighterKnightActions = actionStep (fighterKnightActions f) }
     heal :: Health -> FighterKnight -> FighterKnight
-    heal h f = f { fighterKnightHealth = addHealth (fighterKnightHealth f) h }
+    heal h f = f { fighterKnightHealth = (fighterKnightHealth f) + h }
     cast :: Defence -> FighterKnight -> FighterKnight
-    cast d f = f { fighterKnightDefence = addDefence (fighterKnightDefence f) d }
+    cast d f = f { fighterKnightDefence = (fighterKnightDefence f) + d }
     attack :: Attack -> FighterKnight -> FighterKnight
     attack a f = f { fighterKnightHealth = calculateFighterHit (defenceAttack f a) (getHealth f) }
 
