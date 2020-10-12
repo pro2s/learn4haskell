@@ -51,7 +51,7 @@ chapter4normal = describe "Chapter4Normal" $ do
         it "Reward odd" $ (Reward 11 >>= halfSecret) `shouldBe` Trap "it's a trap"
 
 chapter4advanced :: Spec
-chapter4advanced = describe "Chapter4Advanced" $
+chapter4advanced = describe "Chapter4Advanced" $ do
     describe "Task 8*: Before the Final Boss" $ do
         it "Nothing - Nothing" $ andM Nothing Nothing `shouldBe` Nothing
         it "Nothing - Just" $ andM Nothing (Just True) `shouldBe` Nothing
